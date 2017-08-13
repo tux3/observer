@@ -1,8 +1,46 @@
 #include "procstab.h"
 #include "ui_procstab.h"
+#include "processtreewidgetitem.h"
 #include <QDebug>
 #include <QDir>
 #include <QFile>
+#include <QStringRef>
+
+struct Task
+{
+    QString name;
+    ProcessTreeWidgetItem* widget;
+    size_t memAnon;
+    uid_t uid;
+    pid_t pid;
+    pid_t ppid;
+    pid_t tgid;
+    size_t numThreads;
+
+    size_t utime; // User time
+    size_t stime; // Kernerl time
+    size_t startTime;
+    float cpuPercent;
+
+    ProcessTreeWidgetItem::SortableItems makeTaskWidgetItems(const QHash<uid_t, QString>& users) {
+        return {
+            {
+                name,
+                pid,
+                uid,
+                cpuPercent,
+                (qulonglong) memAnon,
+            },
+            {
+                name,
+                QString::number(pid),
+                users[uid],
+                QStringLiteral("%1 %").arg((int)cpuPercent),
+                QStringLiteral("%1 MiB").arg(memAnon/1024./1024., 0, 'f', 1),
+            }
+        };
+    }
+};
 
 constexpr const ProcsTableColumn ProcsTab::columns[];
 
@@ -43,7 +81,7 @@ void ProcsTab::refresh()
     ui->treeWidget->setSortingEnabled(false);
 
     // Process all existing tasks
-    const auto entries = QDir(PROC_PATH).entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot);
+    const auto entries = QDir(QStringLiteral("/proc")).entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot);
     for (QFileInfo entry : entries) try {
         bool isNumber;
         pid_t pid = entry.fileName().toLongLong(&isNumber);
@@ -111,10 +149,10 @@ Task ProcsTab::makeFreshTask(pid_t pid, pid_t tgid, uid_t uid, Task* lastTask)
     task.uid = uid;
 
     QString statPath = pid == tgid ? // For the main thread, we report its CPU as the whole process' CPU
-                QString("%1%2/stat").arg(PROC_PATH).arg(pid)
-              : QString("%1%2/task/%2/stat").arg(PROC_PATH).arg(pid);
+                QString("/proc/%2/stat").arg(pid)
+              : QString("/proc/%2/task/%2/stat").arg(pid);
     QFile statFile(statPath);
-    if (!statFile.open(QIODevice::ReadOnly))
+    if (!statFile.open(QIODevice::ReadOnly | QIODevice::Unbuffered))
         throw std::runtime_error(("Failed to read "+statPath).toStdString());
 
     QString statStr = statFile.readAll();
@@ -122,27 +160,35 @@ Task ProcsTab::makeFreshTask(pid_t pid, pid_t tgid, uid_t uid, Task* lastTask)
     if (leftParen == -1 || rightParen == -1 || rightParen < leftParen)
         throw std::runtime_error(QString("Failed to parse name in stat line of process %1").arg(pid).toStdString());
 
-    pid_t parsedPid = statStr.left(leftParen).toLongLong();
+    pid_t parsedPid = QStringRef(&statStr, 0, leftParen).toLongLong();
     if (parsedPid != pid)
         throw std::runtime_error(QString("Stat file says task %1 has pid %2, what is going on!?").arg(pid).arg(task.pid).toStdString());
 
-    QList<QString> trailingParams = statStr.mid(rightParen+2).split(' ');
     task.name = statStr.mid(leftParen+1, rightParen-leftParen-1);
-    task.ppid = trailingParams[1].toLongLong();
-    task.utime = trailingParams[11].toLongLong();
-    task.stime = trailingParams[12].toLongLong();
-    task.cutime = trailingParams[13].toLongLong();
-    task.cstime = trailingParams[14].toLongLong();
-    task.numThreads = trailingParams[17].toLongLong();
-    task.startTime = trailingParams[19].toLongLong();
-    task.memAnon = trailingParams[21].toLongLong()*4096;
+
+    QStringRef remaining = QStringRef(&statStr, rightParen+2, statStr.size()-rightParen-2);
+    auto consume = [&remaining](int skip = 0) -> long long unsigned {
+        while (skip--)
+            remaining = remaining.mid(remaining.indexOf(' ')+1);
+
+        auto next = remaining.indexOf(' ')+1;
+        auto result = remaining.left(next).toULongLong();
+        remaining = remaining.mid(next);
+        return result;
+    };
+    task.ppid = consume(1);
+    task.utime = consume(9);
+    task.stime = consume();
+    task.numThreads = consume(4);
+    task.startTime = consume(1);
+    task.memAnon = consume(1)*4096;
 
     if (lastTask) {
         size_t runtimeTicks = (task.utime+task.stime) - (lastTask->utime+lastTask->stime);
         float runtime = uptime - lastUptime;
         task.cpuPercent = 100. * runtimeTicks / hertz / runtime;
         task.widget = lastTask->widget;
-        task.widget->setItems(makeTaskWidgetItems(task));
+        task.widget->setItems(task.makeTaskWidgetItems(users));
     } else {
         size_t totalTime = task.utime+task.stime;
         float runtime = uptime - (task.startTime / hertz);
@@ -155,7 +201,7 @@ Task ProcsTab::makeFreshTask(pid_t pid, pid_t tgid, uid_t uid, Task* lastTask)
 
 void ProcsTab::updateUptime()
 {
-    QFile uptimeFile(QString(PROC_PATH)+"uptime");
+    QFile uptimeFile(QStringLiteral("/proc/uptime"));
     if (!uptimeFile.open(QIODevice::ReadOnly))
         return;
     QString upStr = uptimeFile.readAll();
@@ -165,7 +211,7 @@ void ProcsTab::updateUptime()
 
 void ProcsTab::readUsers()
 {
-    QFile passwd("/etc/passwd");
+    QFile passwd(QStringLiteral("/etc/passwd"));
     if (!passwd.open(QIODevice::ReadOnly)) {
         qWarning() << "Can't open /etc/passwd to read users list!";
         return;
@@ -179,29 +225,17 @@ void ProcsTab::readUsers()
     }
 }
 
-QVector<ProcessTreeWidgetItem::SortableItem> ProcsTab::makeTaskWidgetItems(const Task &task)
-{
-    using Item = ProcessTreeWidgetItem::SortableItem;
-    Item name = { task.name, task.name };
-    Item pid = { task.pid, QString::number(task.pid) };
-    Item user = { task.uid, users[task.uid] };
-    Item cpu = { task.cpuPercent, QString("%1 %").arg(task.cpuPercent, 0, 'f', 0) };
-    Item memory = { (qulonglong) task.memAnon, QString("%1 MiB").arg(task.memAnon/1024./1024., 0, 'f', 1) };
-
-    return {name, pid, user, cpu, memory};
-}
-
 ProcessTreeWidgetItem *ProcsTab::makeTaskWidget(Task &task, QHash<pid_t, Task>& curTasks)
 {
     if (!task.widget) {
         if (task.tgid == task.pid || !task.tgid) {
-            task.widget = new ProcessTreeWidgetItem(ui->treeWidget, makeTaskWidgetItems(task));
+            task.widget = new ProcessTreeWidgetItem(ui->treeWidget, task.makeTaskWidgetItems(users));
         } else {
             if (!showThreads)
                 return nullptr;
 
             QTreeWidgetItem* parent = makeTaskWidget(curTasks[task.tgid], curTasks);
-            task.widget = new ProcessTreeWidgetItem(parent, makeTaskWidgetItems(task));
+            task.widget = new ProcessTreeWidgetItem(parent, task.makeTaskWidgetItems(users));
         }
     }
 

@@ -1,35 +1,43 @@
 #include "processtreewidgetitem.h"
 #include "procstablecolumn.h"
-#include "procstab.h"
 #include <cassert>
 
-ProcessTreeWidgetItem::ProcessTreeWidgetItem(QTreeWidget *parent, QVector<SortableItem> items)
+ProcessTreeWidgetItem::ProcessTreeWidgetItem(QTreeWidget *parent, SortableItems items)
     : QTreeWidgetItem(parent)
 {
-    setItems(items);
+    setItems(std::move(items));
+    setFixedRowHeight();
 }
 
-ProcessTreeWidgetItem::ProcessTreeWidgetItem(QTreeWidgetItem *parent, QVector<SortableItem> items)
+ProcessTreeWidgetItem::ProcessTreeWidgetItem(QTreeWidgetItem *parent, SortableItems items)
     : QTreeWidgetItem(parent)
 {
-    setItems(items);
+    setItems(std::move(items));
+    setFixedRowHeight();
 }
 
-void ProcessTreeWidgetItem::setItems(QVector<ProcessTreeWidgetItem::SortableItem> items)
+void ProcessTreeWidgetItem::setItems(SortableItems items)
 {
-    assert(items.size() == std::extent<decltype(ProcsTab::columns)>());
+    assert(items.displayText.size() == std::extent<decltype(ProcsTab::columns)>());
 
-    for (int i = 0; i < items.size(); ++i) {
-        setText(i, items[i].displayText);
-        setData(i, Qt::UserRole, items[i].sortKey);
-        setSizeHint(i, QSize{QTreeWidgetItem::sizeHint(i).width(), 25});
-    }
+    for (int i = 0; i < items.displayText.size(); ++i)
+        setData(i, Qt::DisplayRole, items.displayText[i]);
+    sortKeys = std::move(items.sortKeys);
 }
 
-bool ProcessTreeWidgetItem::operator<(const QTreeWidgetItem &other) const {
+bool ProcessTreeWidgetItem::operator<(const QTreeWidgetItem &otherBase) const {
+    const ProcessTreeWidgetItem& otherDerived = reinterpret_cast<const ProcessTreeWidgetItem&>(otherBase);
+
     int sortColumn = treeWidget()->sortColumn();
     ProcsTableColumn column = ProcsTab::columns[sortColumn];
-    const auto& left = other.data(sortColumn, Qt::UserRole);
-    const auto& right = data(sortColumn, Qt::UserRole);
+    const auto& left = otherDerived.sortKeys[sortColumn];
+    const auto& right = sortKeys[sortColumn];
     return column.compareRows(left, right);
+}
+
+void ProcessTreeWidgetItem::setFixedRowHeight()
+{
+    QVariant sizeHint = QSize{QTreeWidgetItem::sizeHint(0).width(), 25};
+    for (int i = 0; i < sortKeys.size(); ++i)
+        setData(i, Qt::SizeHintRole, sizeHint);
 }
