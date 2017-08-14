@@ -23,11 +23,7 @@
   <property name="unifiedTitleAndToolBarOnMac">
    <bool>true</bool>
   </property>
-  <widget class="QTabWidget" name="tabContainer">
-   <property name="currentIndex">
-    <number>0</number>
-   </property>
-  </widget>
+  <widget class="QTabWidget" name="tabContainer"/>
   <widget class="QMenuBar" name="menuBar">
    <property name="geometry">
     <rect>

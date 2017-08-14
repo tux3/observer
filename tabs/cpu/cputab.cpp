@@ -6,6 +6,10 @@
 #include <QGridLayout>
 #include <QChart>
 #include <QChartView>
+#include <QGraphicsLayout>
+#include <QValueAxis>
+#include <QLineSeries>
+#include <QAreaSeries>
 #include <cmath>
 
 using namespace QtCharts;
@@ -76,8 +80,6 @@ void CPUTab::readStaticInfo()
     int threads = getCpuInfoValue(lastCoreStr, "processor").toInt() + 1;
     ui->cores->setText(QString("%1c / %2t").arg(cores).arg(threads));
 
-    lastStats.fill({ 0, 0, 0 }, threads);
-
     QFile maxFreqFile("/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_max_freq");
     if (!maxFreqFile.open(QIODevice::ReadOnly | QIODevice::Unbuffered)) {
         qWarning() << "Failed to read max CPU frequency";
@@ -111,10 +113,42 @@ void CPUTab::readStaticInfo()
     int cols = threads / rows;
     for (int i=0; i<rows; ++i) {
         for (int j=0; j<cols; ++j) {
-            int n = i*cols+j;
             QChart* chart = new QChart();
-            chart->setTitle(QString("CPU %1").arg(n));
-            ui->chartsLayout->addWidget(new QChartView(chart), i, j);
+            QValueAxis* xAxis = new QValueAxis();
+            xAxis->setRange(0, timeResolution);
+            xAxis->setLabelsVisible(false);
+            xAxis->setLineVisible(false);
+            xAxis->setTickCount(7);
+            xAxis->setGridLineColor(Qt::darkGray);
+
+            QValueAxis* yAxis = new QValueAxis();
+            yAxis->setRange(0, 100);
+            yAxis->setLabelsVisible(false);
+            yAxis->setLineVisible(false);
+            yAxis->setTickCount(6);
+            yAxis->setGridLineColor(Qt::darkGray);
+
+            chart->legend()->hide();
+            chart->setBackgroundRoundness(0);
+            // The axes add a LOT of margin when visible, even when they don't have anything to show!
+            // I can't find a way to remove it completely even with the margins at 0,
+            // so we overstep a bit into the negatives to get a reasonnably small margin
+            chart->setMargins(QMargins(-30, 0, 0, -15));
+            chart->layout()->setContentsMargins(0, 0, 0, 0);
+
+            QChartView* chartView = new QChartView(chart);
+            chartView->setRenderHint(QPainter::HighQualityAntialiasing);
+            ui->chartsLayout->addWidget(chartView, i, j);
+
+            QLineSeries* series = new QLineSeries();
+            chart->addSeries(series);
+            chart->addAxis(xAxis, Qt::AlignBottom);
+            chart->addAxis(yAxis, Qt::AlignLeft);
+            series->attachAxis(xAxis);
+            series->attachAxis(yAxis);
+            series->setBrush(Qt::red);
+
+            chartSeries.append(series);
         }
     }
 }
@@ -140,6 +174,12 @@ void CPUTab::updateUsageStats()
         };
     }
 
+    if (lastStats.isEmpty()) {
+        ui->cpuPercents->setText(QString("0 %"));
+        lastStats = stats;
+        return;
+    }
+
     QVector<float> usages;
     for (int i = 0; i<stats.size(); ++i) {
         auto user = stats[i].user - lastStats[i].user;
@@ -150,4 +190,24 @@ void CPUTab::updateUsageStats()
 
     ui->cpuPercents->setText(QString("%1 %").arg(usages[0], 0, 'f', 1));
     lastStats = stats;
+
+    if (usages.size() - 1 != chartSeries.size()) {
+        qCritical() << "We have"<<chartSeries.size()<<"CPU thread charts, but found"<<usages.size()-1<<"threads in the stats!";
+        return;
+    }
+    for (int i=0; i<usages.size()-1; ++i) {
+        QXYSeries* series = chartSeries[i];
+        QVector<QPointF> points = series->pointsVector();
+
+        double nextX = qMax(points.size(), timeResolution);
+        double nextY = usages[i+1];
+
+        if (points.size() >= timeResolution)
+            points.removeFirst();
+        for (QPointF& point : points)
+            point.rx() -= 1;
+
+        points.push_back({nextX, nextY});
+        series->replace(points);
+    }
 }

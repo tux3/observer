@@ -2,6 +2,7 @@
 #define CPUTAB_H
 
 #include "tabwidget.h"
+#include <QXYSeries>
 #include <cstdint>
 
 class QStringRef;
@@ -39,9 +40,12 @@ public:
     static constexpr const char* name = "CPU";
 
 private:
+    static constexpr const int timeResolution = 60;
+
     Ui::CPUTab *ui;
     QString maxFreqStr;
     QVector<CPUStat> lastStats;
+    QVector<QtCharts::QXYSeries*> chartSeries;
 };
 
 #endif // CPUTAB_H

@@ -11,6 +11,8 @@ MainWindow::MainWindow(QWidget *parent) :
 
     ui->tabContainer->addTab(new ProcsTab(), ProcsTab::name);
     ui->tabContainer->addTab(new CPUTab(), CPUTab::name);
+
+    ui->tabContainer->setCurrentIndex(1);
 }
 
 MainWindow::~MainWindow()
