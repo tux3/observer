@@ -34,7 +34,11 @@ void CPUTab::refresh()
     if (!isVisible())
         return;
 
-    unsigned curFreq = getCurFreq();
+    uint64_t curFreq = 0;
+    for (int i=0; i<lastStats.size()-1; ++i) {
+        curFreq += getCurFreq(i);
+    }
+    curFreq /= lastStats.size()-1;
     ui->cpuFreq->setText(QString("%1 / %2 Ghz").arg(curFreq / 1000./1000., 0, 'f', 2).arg(maxFreqStr));
 }
 
@@ -53,13 +57,13 @@ QStringRef CPUTab::getCpuInfoValue(const QStringRef &data, const char *name)
     return data.mid(pos, data.indexOf('\n', pos) - pos);
 }
 
-unsigned CPUTab::getCurFreq()
+unsigned CPUTab::getCurFreq(unsigned cpuNum)
 {
-    QString cpuinfoCurStr = readKernelAttributeFile("/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_cur_freq");
+    QString cpuinfoCurStr = readKernelAttributeFile(QString("/sys/devices/system/cpu/cpu%1/cpufreq/cpuinfo_cur_freq").arg(cpuNum));
     if (!cpuinfoCurStr.isNull())
         return cpuinfoCurStr.trimmed().toUInt();
 
-    return readKernelAttributeFile("/sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq").trimmed().toUInt();
+    return readKernelAttributeFile(QString("/sys/devices/system/cpu/cpu%1/cpufreq/scaling_cur_freq").arg(cpuNum)).trimmed().toUInt();
 }
 
 void CPUTab::readStaticInfo()

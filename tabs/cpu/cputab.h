@@ -32,7 +32,7 @@ protected slots:
 private:
     QString readKernelAttributeFile(const QString& path);
     QStringRef getCpuInfoValue(const QStringRef& data, const char* name);
-    unsigned getCurFreq();
+    unsigned getCurFreq(unsigned cpuNumber);
     void readStaticInfo();
     void updateUsageStats();
 
