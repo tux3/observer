@@ -23,9 +23,7 @@ protected slots:
 protected:
     virtual void showEvent(QShowEvent*) override;
     virtual void hideEvent(QHideEvent*) override;
-
-private:
-    inline void refreshIfVisible() { if (visible) refresh(); }
+    inline bool isVisible() const { return visible; }
 
 private:
     static constexpr const unsigned DEFAULT_REFRESH_INTERVAL = 1000;

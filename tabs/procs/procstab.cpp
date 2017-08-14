@@ -5,6 +5,7 @@
 #include <QDir>
 #include <QFile>
 #include <QStringRef>
+#include <stdexcept>
 
 struct Task
 {
@@ -74,6 +75,9 @@ ProcsTab::~ProcsTab()
 
 void ProcsTab::refresh()
 {
+    if (!isVisible())
+        return;
+
     QHash<pid_t, Task> curTasks;
     QVector<pid_t> newTasks;
     updateUptime();
@@ -113,7 +117,7 @@ void ProcsTab::refresh()
             }
         }
     } catch (const std::exception& e) {
-        qWarning() << "Failed to read process info for PID"<<entry.fileName()<<":"<<e.what();
+        qDebug() << "Failed to read process info for PID"<<entry.fileName()<<":"<<e.what();
         continue;
     }
 

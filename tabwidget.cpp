@@ -8,7 +8,7 @@ TabWidget::TabWidget()
 {
     refreshTimer.start(DEFAULT_REFRESH_INTERVAL);
 
-    connect(&refreshTimer, &QTimer::timeout, this, &TabWidget::refreshIfVisible);
+    connect(&refreshTimer, &QTimer::timeout, this, &TabWidget::refresh);
 }
 
 void TabWidget::setRefreshInterval(unsigned refreshInterval)
@@ -25,4 +25,5 @@ void TabWidget::showEvent(QShowEvent*)
 void TabWidget::hideEvent(QHideEvent *)
 {
     visible = false;
+    refresh();
 }
