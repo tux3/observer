@@ -26,29 +26,32 @@ DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs depr
 
 
 SOURCES += \
-        main.cpp \
-        mainwindow.cpp \
-        tabwidget.cpp \
-        tabs/procs/procstab.cpp \
-        tabs/procs/processtreewidgetitem.cpp \
-        tabs/cpu/cputab.cpp \
-        tabs/procs/procstablecolumn.cpp \
-        tabs/gpu/gputab.cpp
+    tabs/cpu/cputab.cpp \
+    tabs/gpu/gputab.cpp \
+    tabs/overview/overviewtab.cpp \
+    tabs/procs/processtreewidgetitem.cpp \
+    tabs/procs/procstab.cpp \
+    tabs/procs/procstablecolumn.cpp \
+    main.cpp \
+    mainwindow.cpp \
+    tabwidget.cpp
 
 HEADERS += \
-        mainwindow.h \
-        tabwidget.h \
-        tabs/procs/procstab.h \
-        tabs/procs/processtreewidgetitem.h \
-        tabs/cpu/cputab.h \
-        tabs/procs/procstablecolumn.h \
-        tabs/gpu/gputab.h
+    tabs/cpu/cputab.h \
+    tabs/gpu/gputab.h \
+    tabs/overview/overviewtab.h \
+    tabs/procs/processtreewidgetitem.h \
+    tabs/procs/procstab.h \
+    tabs/procs/procstablecolumn.h \
+    mainwindow.h \
+    tabwidget.h
 
 FORMS += \
         mainwindow.ui \
         tabs/procs/procstab.ui \
         tabs/cpu/cputab.ui \
-        tabs/gpu/gputab.ui
+        tabs/gpu/gputab.ui \
+        tabs/overview/overviewtab.ui
 
 RESOURCES += \
     res.qrc
