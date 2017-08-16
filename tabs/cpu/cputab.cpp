@@ -40,6 +40,8 @@ void CPUTab::refresh()
     }
     curFreq /= lastStats.size()-1;
     ui->cpuFreq->setText(QString("%1 / %2 Ghz").arg(curFreq / 1000./1000., 0, 'f', 2).arg(maxFreqStr));
+
+    updateSensors();
 }
 
 QString CPUTab::readKernelAttributeFile(const QString &path)
@@ -213,5 +215,23 @@ void CPUTab::updateUsageStats()
 
         points.push_back({nextX, nextY});
         series->replace(points);
+    }
+}
+
+void CPUTab::updateSensors()
+{
+    // NOTE: The values we report are probably going to be thoroughly wrong on a wide swath or hardware,
+    // but it Works On My Machine™!
+    // TODO: Put this behind an opt-in, and have the opt-in warn that it's as unreliable as it gets
+
+    // TODO: Only accept the voltage from the input named Vcore or VcoreA, the name usually comes from the libsensors config file
+    // Same with the temperature, look for a sensor called "CPU Temp", "CPU0 Temp" or "Core0 Temp"
+
+    QString voltageStr = readKernelAttributeFile("/sys/class/hwmon/hwmon0/in0_input");
+    if (voltageStr.isNull()) {
+        ui->voltage->setText("Unknown");
+    } else {
+        float voltage = voltageStr.toUInt()/1000.;
+        ui->voltage->setText(QString("%1 V").arg(voltage, 0, 'f', 2));
     }
 }

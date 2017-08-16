@@ -2,6 +2,7 @@
 #include "ui_mainwindow.h"
 #include "tabs/procs/procstab.h"
 #include "tabs/cpu/cputab.h"
+#include "tabs/gpu/gputab.h"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -11,6 +12,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     ui->tabContainer->addTab(new ProcsTab(), ProcsTab::name);
     ui->tabContainer->addTab(new CPUTab(), CPUTab::name);
+    ui->tabContainer->addTab(new GPUTab(), GPUTab::name);
 
     ui->tabContainer->setCurrentIndex(1);
 }

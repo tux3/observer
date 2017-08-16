@@ -32,7 +32,8 @@ SOURCES += \
         tabs/procs/procstab.cpp \
         tabs/procs/processtreewidgetitem.cpp \
         tabs/cpu/cputab.cpp \
-    tabs/procs/procstablecolumn.cpp
+        tabs/procs/procstablecolumn.cpp \
+        tabs/gpu/gputab.cpp
 
 HEADERS += \
         mainwindow.h \
@@ -40,12 +41,14 @@ HEADERS += \
         tabs/procs/procstab.h \
         tabs/procs/processtreewidgetitem.h \
         tabs/cpu/cputab.h \
-    tabs/procs/procstablecolumn.h
+        tabs/procs/procstablecolumn.h \
+        tabs/gpu/gputab.h
 
 FORMS += \
         mainwindow.ui \
         tabs/procs/procstab.ui \
-        tabs/cpu/cputab.ui
+        tabs/cpu/cputab.ui \
+        tabs/gpu/gputab.ui
 
 RESOURCES += \
     res.qrc

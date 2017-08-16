@@ -35,6 +35,7 @@ private:
     unsigned getCurFreq(unsigned cpuNumber);
     void readStaticInfo();
     void updateUsageStats();
+    void updateSensors();
 
 public:
     static constexpr const char* name = "CPU";
