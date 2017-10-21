@@ -19,7 +19,7 @@ protected slots:
     void refresh();
 
 public:
-    static constexpr const char* name = "Overview";
+    static constexpr const char* name() {return "Overview";}
 
 private:
     Ui::OverviewTab *ui;

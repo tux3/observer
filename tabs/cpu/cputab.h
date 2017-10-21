@@ -38,7 +38,7 @@ private:
     void updateSensors();
 
 public:
-    static constexpr const char* name = "CPU";
+    static constexpr const char* name() {return "CPU";}
 
 private:
     static constexpr const int timeResolution = 60;

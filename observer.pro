@@ -55,3 +55,5 @@ FORMS += \
 
 RESOURCES += \
     res.qrc
+
+LIBS += -L/usr/lib/x86_64-linux-gnu/nvidia/current/ -lnvidia-ml

@@ -38,7 +38,7 @@ private:
     void readUsers();
 
 public:
-    static constexpr const char* name = "Processes";
+    static constexpr const char* name() {return "Processes";}
     static constexpr const ProcsTableColumn columns[] = {
         { "Name", ProcsTableColumn::StringSort, QHeaderView::Stretch, 250 },
         { "PID", ProcsTableColumn::NumberSort, QHeaderView::Interactive, 50 },

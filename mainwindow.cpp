@@ -4,6 +4,8 @@
 #include "tabs/overview/overviewtab.h"
 #include "tabs/cpu/cputab.h"
 #include "tabs/gpu/gputab.h"
+#include <nvml.h>
+#include <QDebug>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -11,15 +13,30 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    ui->tabContainer->addTab(new ProcsTab(), ProcsTab::name);
-    ui->tabContainer->addTab(new OverviewTab(), OverviewTab::name);
-    ui->tabContainer->addTab(new CPUTab(), CPUTab::name);
-    ui->tabContainer->addTab(new GPUTab(), GPUTab::name);
+    ui->tabContainer->addTab(new ProcsTab(), ProcsTab::name());
+    ui->tabContainer->addTab(new OverviewTab(), OverviewTab::name());
+    ui->tabContainer->addTab(new CPUTab(), CPUTab::name());
 
-    ui->tabContainer->setCurrentIndex(1);
+    if (nvmlInit() != NVML_SUCCESS) {
+        qWarning() << "Failed to initialize Nvidia NVML, GPU monitoring won't be available";
+    } else {
+        unsigned numDevices = 0;
+        if (nvmlDeviceGetCount(&numDevices) != NVML_SUCCESS) {
+            qWarning() << "Failed to get number of GPUs, assuming zero";
+        }
+
+        for (decltype(numDevices) i=0; i<numDevices; ++i) {
+            auto gpuTab = new GPUTab(i);
+            ui->tabContainer->addTab(gpuTab, gpuTab->name());
+        }
+    }
+
+    ui->tabContainer->setCurrentIndex(3); /// TODO: Remove this
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
+
+    nvmlShutdown();
 }
