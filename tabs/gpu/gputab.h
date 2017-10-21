@@ -16,7 +16,7 @@ class GPUTab : public TabWidget
 public:
     explicit GPUTab(unsigned gpuNum);
     ~GPUTab();
-    const char* name() {return tabName.toStdString().c_str();}
+    const char* name() {return tabName;}
 
 protected slots:
     void refresh();
@@ -29,7 +29,7 @@ private:
     static constexpr const int timeResolution = 60;
 
     Ui::GPUTab *ui;
-    QString tabName;
+    char tabName[8];
 
     nvmlDevice_t device;
     QtCharts::QXYSeries* usageSeries;

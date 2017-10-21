@@ -141,6 +141,7 @@ void CPUTab::readStaticInfo()
             // so we overstep a bit into the negatives to get a reasonnably small margin
             chart->setMargins(QMargins(-30, 0, 0, -15));
             chart->layout()->setContentsMargins(0, 0, 0, 0);
+            chart->setBackgroundVisible(false);
 
             QChartView* chartView = new QChartView(chart);
             chartView->setRenderHint(QPainter::HighQualityAntialiasing);

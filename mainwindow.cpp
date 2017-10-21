@@ -30,8 +30,6 @@ MainWindow::MainWindow(QWidget *parent) :
             ui->tabContainer->addTab(gpuTab, gpuTab->name());
         }
     }
-
-    ui->tabContainer->setCurrentIndex(3); /// TODO: Remove this
 }
 
 MainWindow::~MainWindow()

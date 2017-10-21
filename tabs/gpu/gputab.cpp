@@ -7,15 +7,17 @@
 #include <QLineSeries>
 #include <QAreaSeries>
 #include <QDebug>
+#include <cstring>
 
 using namespace QtCharts;
 
 GPUTab::GPUTab(unsigned gpuNum)
-    : ui(new Ui::GPUTab)
+    : ui(new Ui::GPUTab), tabName{0}
 {
     ui->setupUi(this);
 
-    tabName = QString("GPU %1").arg(gpuNum);
+    auto tabNameStr = QString("GPU %1").arg(gpuNum).toStdString();
+    memcpy(tabName, tabNameStr.c_str(), tabNameStr.length());
 
     nvmlDeviceGetHandleByIndex(gpuNum, &device);
 
@@ -43,6 +45,7 @@ GPUTab::GPUTab(unsigned gpuNum)
     chart->setBackgroundRoundness(0);
     chart->setMargins(QMargins(0, 0, 0, -15));
     chart->layout()->setContentsMargins(0, 0, 0, 0);
+    chart->setBackgroundVisible(false);
 
     QChartView* chartView = new QChartView(chart);
     chartView->setRenderHint(QPainter::HighQualityAntialiasing);
