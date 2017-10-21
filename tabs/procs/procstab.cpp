@@ -5,7 +5,9 @@
 #include <QDir>
 #include <QFile>
 #include <QStringRef>
+#include <QMenu>
 #include <stdexcept>
+#include <signal.h>
 
 struct Task
 {
@@ -55,6 +57,8 @@ ProcsTab::ProcsTab()
         headerLabels += column.name;
     ui->treeWidget->setHeaderLabels(headerLabels);
     ui->treeWidget->sortByColumn(3, Qt::AscendingOrder); // CPU
+    ui->treeWidget->setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(ui->treeWidget, &QTreeWidget::customContextMenuRequested, this, &ProcsTab::customContextMenu);
 
     auto header = ui->treeWidget->header();
     for (int i=ui->treeWidget->columnCount() - 1; i >= 0; --i) {
@@ -143,6 +147,24 @@ void ProcsTab::refresh()
     tasks = curTasks;
 
     ui->treeWidget->setSortingEnabled(true);
+}
+
+void ProcsTab::customContextMenu(const QPoint &pos)
+{
+    QModelIndex index = ui->treeWidget->indexAt(pos);
+    if (!index.isValid())
+        return;
+    int pid = index.sibling(index.row(), 1).data().toInt();
+
+    QMenu contextMenu;
+    contextMenu.addAction("Terminate process", [this, pid]{
+        kill(pid, SIGTERM);
+    });
+    contextMenu.addAction("Kill process", [this, pid]{
+        kill(pid, SIGKILL);
+    });
+
+    contextMenu.exec(ui->treeWidget->viewport()->mapToGlobal(pos));
 }
 
 Task ProcsTab::makeFreshTask(pid_t pid, pid_t tgid, uid_t uid, Task* lastTask)

@@ -31,6 +31,9 @@ public:
 protected slots:
     void refresh();
 
+private slots:
+    void customContextMenu(const QPoint& pos);
+
 private:
     Task makeFreshTask(pid_t pid, pid_t tgid, uid_t uid, Task* lastTask);
     ProcessTreeWidgetItem *makeTaskWidget(Task& task, QHash<pid_t, Task> &curTasks);
