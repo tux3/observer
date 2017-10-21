@@ -33,6 +33,7 @@ protected slots:
 
 private slots:
     void customContextMenu(const QPoint& pos);
+    void terminateShortcutActivated();
 
 private:
     Task makeFreshTask(pid_t pid, pid_t tgid, uid_t uid, Task* lastTask);

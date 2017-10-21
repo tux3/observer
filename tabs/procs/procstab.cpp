@@ -6,6 +6,7 @@
 #include <QFile>
 #include <QStringRef>
 #include <QMenu>
+#include <QShortcut>
 #include <stdexcept>
 #include <signal.h>
 
@@ -59,6 +60,9 @@ ProcsTab::ProcsTab()
     ui->treeWidget->sortByColumn(3, Qt::AscendingOrder); // CPU
     ui->treeWidget->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(ui->treeWidget, &QTreeWidget::customContextMenuRequested, this, &ProcsTab::customContextMenu);
+
+    auto terminateShortcut = new QShortcut(QKeySequence::Delete, this);
+    connect(terminateShortcut, &QShortcut::activated, this, &ProcsTab::terminateShortcutActivated);
 
     auto header = ui->treeWidget->header();
     for (int i=ui->treeWidget->columnCount() - 1; i >= 0; --i) {
@@ -165,6 +169,16 @@ void ProcsTab::customContextMenu(const QPoint &pos)
     });
 
     contextMenu.exec(ui->treeWidget->viewport()->mapToGlobal(pos));
+}
+
+void ProcsTab::terminateShortcutActivated()
+{
+    QModelIndex index = ui->treeWidget->currentIndex();
+    if (!index.isValid())
+        return;
+    int pid = index.sibling(index.row(), 1).data().toInt();
+
+    kill(pid, SIGTERM);
 }
 
 Task ProcsTab::makeFreshTask(pid_t pid, pid_t tgid, uid_t uid, Task* lastTask)
