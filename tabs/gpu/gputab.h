@@ -9,14 +9,13 @@ namespace Ui {
 class GPUTab;
 }
 
-class GPUTab : public TabWidget
-{
+class GPUTab : public TabWidget {
     Q_OBJECT
 
 public:
     explicit GPUTab(unsigned gpuNum);
     ~GPUTab();
-    const char* name() {return tabName;}
+    const char* name() { return tabName; }
 
 protected slots:
     void refresh();
@@ -28,7 +27,7 @@ private:
 private:
     static constexpr const int timeResolution = 60;
 
-    Ui::GPUTab *ui;
+    Ui::GPUTab* ui;
     char tabName[8];
 
     nvmlDevice_t device;

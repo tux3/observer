@@ -1,13 +1,13 @@
 #ifndef PROCS_H
 #define PROCS_H
 
-#include "tabwidget.h"
 #include "procstablecolumn.h"
-#include <cstdint>
+#include "tabwidget.h"
+#include <QHash>
 #include <cstddef>
+#include <cstdint>
 #include <sys/types.h>
 #include <unistd.h>
-#include <QHash>
 
 class QTreeWidgetItem;
 class ProcessTreeWidgetItem;
@@ -20,8 +20,7 @@ class ProcsTab;
 
 struct Task;
 
-class ProcsTab : public TabWidget
-{
+class ProcsTab : public TabWidget {
     Q_OBJECT
 
 public:
@@ -37,12 +36,12 @@ private slots:
 
 private:
     Task makeFreshTask(pid_t pid, pid_t tgid, uid_t uid, Task* lastTask);
-    ProcessTreeWidgetItem *makeTaskWidget(Task& task, QHash<pid_t, Task> &curTasks);
+    ProcessTreeWidgetItem* makeTaskWidget(Task& task, QHash<pid_t, Task>& curTasks);
     void updateUptime();
     void readUsers();
 
 public:
-    static constexpr const char* name() {return "Processes";}
+    static constexpr const char* name() { return "Processes"; }
     static constexpr const ProcsTableColumn columns[] = {
         { "Name", ProcsTableColumn::StringSort, QHeaderView::Stretch, 250 },
         { "PID", ProcsTableColumn::NumberSort, QHeaderView::Interactive, 50 },
@@ -50,9 +49,10 @@ public:
         { "CPU", ProcsTableColumn::NumberSort, QHeaderView::Interactive, 75 },
         { "Memory", ProcsTableColumn::NumberSort, QHeaderView::Interactive, 100 },
     };
+
 private:
     static constexpr const bool showThreads = true; /// TODO: Make this a checkbox in the View menu
-    Ui::ProcsTab *ui;
+    Ui::ProcsTab* ui;
     QHash<pid_t, Task> tasks;
     QHash<uid_t, QString> users;
     unsigned hertz;

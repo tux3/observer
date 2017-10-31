@@ -9,8 +9,7 @@
  * or if you do don't try to sort them, the comparison operator will hapilly crash on you!
  * Since ProcessTreeWidgetItems are meant to be sorted differently, it wouldn't make sense.
  */
-class ProcessTreeWidgetItem : public QTreeWidgetItem
-{
+class ProcessTreeWidgetItem : public QTreeWidgetItem {
 public:
     struct SortableItems {
         QVector<QVariant> sortKeys;
@@ -23,7 +22,7 @@ public:
 
     void setItems(SortableItems items);
 
-    virtual bool operator<(const QTreeWidgetItem &other) const override;
+    virtual bool operator<(const QTreeWidgetItem& other) const override;
 
 private:
     void setFixedRowHeight();

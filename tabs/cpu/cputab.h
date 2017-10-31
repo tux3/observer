@@ -18,8 +18,7 @@ namespace Ui {
 class CPUTab;
 }
 
-class CPUTab : public TabWidget
-{
+class CPUTab : public TabWidget {
     Q_OBJECT
 
 public:
@@ -38,12 +37,12 @@ private:
     void updateSensors();
 
 public:
-    static constexpr const char* name() {return "CPU";}
+    static constexpr const char* name() { return "CPU"; }
 
 private:
     static constexpr const int timeResolution = 60;
 
-    Ui::CPUTab *ui;
+    Ui::CPUTab* ui;
     QString maxFreqStr;
     QVector<CPUStat> lastStats;
     QVector<QtCharts::QXYSeries*> chartSeries;

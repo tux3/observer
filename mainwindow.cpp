@@ -1,15 +1,15 @@
 #include "mainwindow.h"
-#include "ui_mainwindow.h"
-#include "tabs/procs/procstab.h"
-#include "tabs/overview/overviewtab.h"
 #include "tabs/cpu/cputab.h"
 #include "tabs/gpu/gputab.h"
-#include <nvml.h>
+#include "tabs/overview/overviewtab.h"
+#include "tabs/procs/procstab.h"
+#include "ui_mainwindow.h"
 #include <QDebug>
+#include <nvml.h>
 
-MainWindow::MainWindow(QWidget *parent) :
-    QMainWindow(parent),
-    ui(new Ui::MainWindow)
+MainWindow::MainWindow(QWidget* parent)
+    : QMainWindow(parent)
+    , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
 
@@ -25,7 +25,7 @@ MainWindow::MainWindow(QWidget *parent) :
             qWarning() << "Failed to get number of GPUs, assuming zero";
         }
 
-        for (decltype(numDevices) i=0; i<numDevices; ++i) {
+        for (decltype(numDevices) i = 0; i < numDevices; ++i) {
             auto gpuTab = new GPUTab(i);
             ui->tabContainer->addTab(gpuTab, gpuTab->name());
         }

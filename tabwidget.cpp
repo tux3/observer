@@ -4,7 +4,7 @@
 QTimer TabWidget::refreshTimer;
 
 TabWidget::TabWidget()
-    : visible{false}
+    : visible{ false }
 {
     refreshTimer.start(DEFAULT_REFRESH_INTERVAL);
 
@@ -22,7 +22,7 @@ void TabWidget::showEvent(QShowEvent*)
     refresh();
 }
 
-void TabWidget::hideEvent(QHideEvent *)
+void TabWidget::hideEvent(QHideEvent*)
 {
     visible = false;
     refresh();

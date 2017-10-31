@@ -14,5 +14,4 @@ OverviewTab::~OverviewTab()
 
 void OverviewTab::refresh()
 {
-
 }

@@ -1,17 +1,16 @@
 #include "procstab.h"
-#include "ui_procstab.h"
 #include "processtreewidgetitem.h"
+#include "ui_procstab.h"
 #include <QDebug>
 #include <QDir>
 #include <QFile>
-#include <QStringRef>
 #include <QMenu>
 #include <QShortcut>
-#include <stdexcept>
+#include <QStringRef>
 #include <signal.h>
+#include <stdexcept>
 
-struct Task
-{
+struct Task {
     QString name;
     ProcessTreeWidgetItem* widget;
     size_t memAnon;
@@ -26,21 +25,22 @@ struct Task
     size_t startTime;
     float cpuPercent;
 
-    ProcessTreeWidgetItem::SortableItems makeTaskWidgetItems(const QHash<uid_t, QString>& users) {
+    ProcessTreeWidgetItem::SortableItems makeTaskWidgetItems(const QHash<uid_t, QString>& users)
+    {
         return {
             {
                 name,
                 pid,
                 uid,
                 cpuPercent,
-                (qulonglong) memAnon,
+                (qulonglong)memAnon,
             },
             {
                 name,
                 QString::number(pid),
                 users[uid],
                 QStringLiteral("%1 %").arg((int)cpuPercent),
-                QStringLiteral("%1 MiB").arg(memAnon/1024./1024., 0, 'f', 1),
+                QStringLiteral("%1 MiB").arg(memAnon / 1024. / 1024., 0, 'f', 1),
             }
         };
     }
@@ -65,7 +65,7 @@ ProcsTab::ProcsTab()
     connect(terminateShortcut, &QShortcut::activated, this, &ProcsTab::terminateShortcutActivated);
 
     auto header = ui->treeWidget->header();
-    for (int i=ui->treeWidget->columnCount() - 1; i >= 0; --i) {
+    for (int i = ui->treeWidget->columnCount() - 1; i >= 0; --i) {
         header->resizeSection(i, columns[i].defaultWidth);
         header->setSectionResizeMode(i, columns[i].resizeMode);
     }
@@ -94,40 +94,41 @@ void ProcsTab::refresh()
 
     // Process all existing tasks
     const auto entries = QDir(QStringLiteral("/proc")).entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot);
-    for (QFileInfo entry : entries) try {
-        bool isNumber;
-        pid_t pid = entry.fileName().toLongLong(&isNumber);
-        if (!isNumber || pid <= 0)
-            continue;
+    for (QFileInfo entry : entries)
+        try {
+            bool isNumber;
+            pid_t pid = entry.fileName().toLongLong(&isNumber);
+            if (!isNumber || pid <= 0)
+                continue;
 
-        auto lastTaskIt = tasks.find(pid);
-        Task* lastTask = lastTaskIt == tasks.end() ? nullptr : &lastTaskIt.value();
-        auto taskIt = curTasks.insert(pid, makeFreshTask(pid, pid, entry.ownerId(), lastTask));
-        if (lastTask)
-            tasks.erase(lastTaskIt);
-        else
-            newTasks += pid;
+            auto lastTaskIt = tasks.find(pid);
+            Task* lastTask = lastTaskIt == tasks.end() ? nullptr : &lastTaskIt.value();
+            auto taskIt = curTasks.insert(pid, makeFreshTask(pid, pid, entry.ownerId(), lastTask));
+            if (lastTask)
+                tasks.erase(lastTaskIt);
+            else
+                newTasks += pid;
 
-        if (showThreads && taskIt.value().numThreads > 1) {
-            auto entries = QDir(entry.filePath()+"/task").entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot);
-            for (QFileInfo threadEntry : entries) {
-                pid_t tid = threadEntry.fileName().toLongLong();
-                if (pid == tid)
-                    continue;
+            if (showThreads && taskIt.value().numThreads > 1) {
+                auto entries = QDir(entry.filePath() + "/task").entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot);
+                for (QFileInfo threadEntry : entries) {
+                    pid_t tid = threadEntry.fileName().toLongLong();
+                    if (pid == tid)
+                        continue;
 
-                auto lastTaskIt = tasks.find(tid);
-                Task* lastTask = lastTaskIt == tasks.end() ? nullptr : &lastTaskIt.value();
-                curTasks.insert(tid, makeFreshTask(tid, pid, threadEntry.ownerId(), lastTask));
-                if (lastTask)
-                    tasks.erase(lastTaskIt);
-                else
-                    newTasks += tid;
+                    auto lastTaskIt = tasks.find(tid);
+                    Task* lastTask = lastTaskIt == tasks.end() ? nullptr : &lastTaskIt.value();
+                    curTasks.insert(tid, makeFreshTask(tid, pid, threadEntry.ownerId(), lastTask));
+                    if (lastTask)
+                        tasks.erase(lastTaskIt);
+                    else
+                        newTasks += tid;
+                }
             }
+        } catch (const std::exception& e) {
+            qDebug() << "Failed to read process info for PID" << entry.fileName() << ":" << e.what();
+            continue;
         }
-    } catch (const std::exception& e) {
-        qDebug() << "Failed to read process info for PID"<<entry.fileName()<<":"<<e.what();
-        continue;
-    }
 
     // Add new tasks to the view
     for (auto taskPid : newTasks) {
@@ -153,7 +154,7 @@ void ProcsTab::refresh()
     ui->treeWidget->setSortingEnabled(true);
 }
 
-void ProcsTab::customContextMenu(const QPoint &pos)
+void ProcsTab::customContextMenu(const QPoint& pos)
 {
     QModelIndex index = ui->treeWidget->indexAt(pos);
     if (!index.isValid())
@@ -161,10 +162,10 @@ void ProcsTab::customContextMenu(const QPoint &pos)
     int pid = index.sibling(index.row(), 1).data().toInt();
 
     QMenu contextMenu;
-    contextMenu.addAction("Terminate process", [this, pid]{
+    contextMenu.addAction("Terminate process", [this, pid] {
         kill(pid, SIGTERM);
     });
-    contextMenu.addAction("Kill process", [this, pid]{
+    contextMenu.addAction("Kill process", [this, pid] {
         kill(pid, SIGKILL);
     });
 
@@ -189,11 +190,11 @@ Task ProcsTab::makeFreshTask(pid_t pid, pid_t tgid, uid_t uid, Task* lastTask)
     task.uid = uid;
 
     QString statPath = pid == tgid ? // For the main thread, we report its CPU as the whole process' CPU
-                QString("/proc/%2/stat").arg(pid)
-              : QString("/proc/%2/task/%2/stat").arg(pid);
+        QString("/proc/%2/stat").arg(pid)
+                                   : QString("/proc/%2/task/%2/stat").arg(pid);
     QFile statFile(statPath);
     if (!statFile.open(QIODevice::ReadOnly | QIODevice::Unbuffered))
-        throw std::runtime_error(("Failed to read "+statPath).toStdString());
+        throw std::runtime_error(("Failed to read " + statPath).toStdString());
 
     QString statStr = statFile.readAll();
     auto leftParen = statStr.indexOf('('), rightParen = statStr.lastIndexOf(')');
@@ -204,14 +205,14 @@ Task ProcsTab::makeFreshTask(pid_t pid, pid_t tgid, uid_t uid, Task* lastTask)
     if (parsedPid != pid)
         throw std::runtime_error(QString("Stat file says task %1 has pid %2, what is going on!?").arg(pid).arg(task.pid).toStdString());
 
-    task.name = statStr.mid(leftParen+1, rightParen-leftParen-1);
+    task.name = statStr.mid(leftParen + 1, rightParen - leftParen - 1);
 
-    QStringRef remaining = QStringRef(&statStr, rightParen+2, statStr.size()-rightParen-2);
+    QStringRef remaining = QStringRef(&statStr, rightParen + 2, statStr.size() - rightParen - 2);
     auto consume = [&remaining](int skip = 0) -> long long unsigned {
         while (skip--)
-            remaining = remaining.mid(remaining.indexOf(' ')+1);
+            remaining = remaining.mid(remaining.indexOf(' ') + 1);
 
-        auto next = remaining.indexOf(' ')+1;
+        auto next = remaining.indexOf(' ') + 1;
         auto result = remaining.left(next).toULongLong();
         remaining = remaining.mid(next);
         return result;
@@ -221,16 +222,16 @@ Task ProcsTab::makeFreshTask(pid_t pid, pid_t tgid, uid_t uid, Task* lastTask)
     task.stime = consume();
     task.numThreads = consume(4);
     task.startTime = consume(1);
-    task.memAnon = consume(1)*4096;
+    task.memAnon = consume(1) * 4096;
 
     if (lastTask) {
-        size_t runtimeTicks = (task.utime+task.stime) - (lastTask->utime+lastTask->stime);
+        size_t runtimeTicks = (task.utime + task.stime) - (lastTask->utime + lastTask->stime);
         float runtime = uptime - lastUptime;
         task.cpuPercent = 100. * runtimeTicks / hertz / runtime;
         task.widget = lastTask->widget;
         task.widget->setItems(task.makeTaskWidgetItems(users));
     } else {
-        size_t totalTime = task.utime+task.stime;
+        size_t totalTime = task.utime + task.stime;
         float runtime = uptime - (task.startTime / hertz);
         task.cpuPercent = 100. * totalTime / hertz / runtime;
         task.widget = nullptr;
@@ -265,7 +266,7 @@ void ProcsTab::readUsers()
     }
 }
 
-ProcessTreeWidgetItem *ProcsTab::makeTaskWidget(Task &task, QHash<pid_t, Task>& curTasks)
+ProcessTreeWidgetItem* ProcsTab::makeTaskWidget(Task& task, QHash<pid_t, Task>& curTasks)
 {
     if (!task.widget) {
         if (task.tgid == task.pid || !task.tgid) {

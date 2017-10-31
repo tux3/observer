@@ -1,18 +1,19 @@
 #include "gputab.h"
 #include "ui_gputab.h"
+#include <QAreaSeries>
 #include <QChart>
 #include <QChartView>
-#include <QGraphicsLayout>
-#include <QValueAxis>
-#include <QLineSeries>
-#include <QAreaSeries>
 #include <QDebug>
+#include <QGraphicsLayout>
+#include <QLineSeries>
+#include <QValueAxis>
 #include <cstring>
 
 using namespace QtCharts;
 
 GPUTab::GPUTab(unsigned gpuNum)
-    : ui(new Ui::GPUTab), tabName{0}
+    : ui(new Ui::GPUTab)
+    , tabName{ 0 }
 {
     ui->setupUi(this);
 
@@ -87,7 +88,7 @@ void GPUTab::updateUsageGraph()
     for (QPointF& point : points)
         point.rx() -= 1;
 
-    points.push_back({nextX, (double)utilization.gpu});
+    points.push_back({ nextX, (double)utilization.gpu });
     usageSeries->replace(points);
 }
 
@@ -99,7 +100,7 @@ void GPUTab::updateStats()
 
     unsigned powerUsage;
     nvmlDeviceGetPowerUsage(device, &powerUsage);
-    ui->powerUsage->setText(QString("%1 W").arg((double)powerUsage/1000, 0, 'f', 2));
+    ui->powerUsage->setText(QString("%1 W").arg((double)powerUsage / 1000, 0, 'f', 2));
 
     unsigned temperature;
     nvmlDeviceGetTemperature(device, NVML_TEMPERATURE_GPU, &temperature);
@@ -107,7 +108,7 @@ void GPUTab::updateStats()
 
     nvmlMemory_t memInfo;
     nvmlDeviceGetMemoryInfo(device, &memInfo);
-    ui->memoryUsed->setText(QString("%1 / %2 MiB").arg(memInfo.used/1024/1024).arg(memInfo.total/1024/1024));
+    ui->memoryUsed->setText(QString("%1 / %2 MiB").arg(memInfo.used / 1024 / 1024).arg(memInfo.total / 1024 / 1024));
 
     unsigned clockSpeed;
     nvmlDeviceGetClockInfo(device, NVML_CLOCK_GRAPHICS, &clockSpeed);

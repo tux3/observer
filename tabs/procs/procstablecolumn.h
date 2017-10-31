@@ -5,8 +5,7 @@
 
 class QVariant;
 
-class ProcsTableColumn
-{
+class ProcsTableColumn {
 public:
     enum ColumnType {
         StringSort = 0,
@@ -27,7 +26,7 @@ private:
     static bool compareVariants(const QVariant& left, const QVariant& right);
     static bool compareUsers(const QVariant& left, const QVariant& right);
 
-    using Comparator = bool(*)(const QVariant&, const QVariant&);
+    using Comparator = bool (*)(const QVariant&, const QVariant&);
     static constexpr const Comparator comparatorFunctions[] = {
         compareVariants,
         compareVariants,

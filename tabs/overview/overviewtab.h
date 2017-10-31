@@ -7,8 +7,7 @@ namespace Ui {
 class OverviewTab;
 }
 
-class OverviewTab : public TabWidget
-{
+class OverviewTab : public TabWidget {
     Q_OBJECT
 
 public:
@@ -19,10 +18,10 @@ protected slots:
     void refresh();
 
 public:
-    static constexpr const char* name() {return "Overview";}
+    static constexpr const char* name() { return "Overview"; }
 
 private:
-    Ui::OverviewTab *ui;
+    Ui::OverviewTab* ui;
 };
 
 #endif // OVERVIEWTAB_H

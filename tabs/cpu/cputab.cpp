@@ -1,15 +1,15 @@
 #include "cputab.h"
 #include "ui_cputab.h"
-#include <QDebug>
-#include <QFile>
-#include <QDir>
-#include <QGridLayout>
+#include <QAreaSeries>
 #include <QChart>
 #include <QChartView>
+#include <QDebug>
+#include <QDir>
+#include <QFile>
 #include <QGraphicsLayout>
-#include <QValueAxis>
+#include <QGridLayout>
 #include <QLineSeries>
-#include <QAreaSeries>
+#include <QValueAxis>
 #include <cmath>
 
 using namespace QtCharts;
@@ -35,16 +35,16 @@ void CPUTab::refresh()
         return;
 
     uint64_t curFreq = 0;
-    for (int i=0; i<lastStats.size()-1; ++i) {
+    for (int i = 0; i < lastStats.size() - 1; ++i) {
         curFreq += getCurFreq(i);
     }
-    curFreq /= lastStats.size()-1;
-    ui->cpuFreq->setText(QString("%1 / %2 Ghz").arg(curFreq / 1000./1000., 0, 'f', 2).arg(maxFreqStr));
+    curFreq /= lastStats.size() - 1;
+    ui->cpuFreq->setText(QString("%1 / %2 Ghz").arg(curFreq / 1000. / 1000., 0, 'f', 2).arg(maxFreqStr));
 
     updateSensors();
 }
 
-QString CPUTab::readKernelAttributeFile(const QString &path)
+QString CPUTab::readKernelAttributeFile(const QString& path)
 {
     QFile f(path);
     if (!f.open(QIODevice::ReadOnly | QIODevice::Truncate))
@@ -53,9 +53,9 @@ QString CPUTab::readKernelAttributeFile(const QString &path)
     return f.readAll();
 }
 
-QStringRef CPUTab::getCpuInfoValue(const QStringRef &data, const char *name)
+QStringRef CPUTab::getCpuInfoValue(const QStringRef& data, const char* name)
 {
-    int pos = data.indexOf(':', data.indexOf(name))+2;
+    int pos = data.indexOf(':', data.indexOf(name)) + 2;
     return data.mid(pos, data.indexOf('\n', pos) - pos);
 }
 
@@ -91,16 +91,16 @@ void CPUTab::readStaticInfo()
         qWarning() << "Failed to read max CPU frequency";
         maxFreqStr = "?";
     } else {
-        maxFreqStr = QString::number(maxFreqFile.readAll().trimmed().toUInt()/1000./1000., 'f', 2);
+        maxFreqStr = QString::number(maxFreqFile.readAll().trimmed().toUInt() / 1000. / 1000., 'f', 2);
     }
 
     QStringList cachesLevels;
     QString cacheDirPath = "/sys/devices/system/cpu/cpu0/cache/";
-    QList<QString> entries = QDir(cacheDirPath).entryList({"index?"}, QDir::Dirs, QDir::Name);
+    QList<QString> entries = QDir(cacheDirPath).entryList({ "index?" }, QDir::Dirs, QDir::Name);
     for (QString entry : entries) {
-        QString descr = readKernelAttributeFile(cacheDirPath+entry+"/size").trimmed();
-        descr += " L" + readKernelAttributeFile(cacheDirPath+entry+"/level").trimmed();
-        QString type = readKernelAttributeFile(cacheDirPath+entry+"/type").trimmed();
+        QString descr = readKernelAttributeFile(cacheDirPath + entry + "/size").trimmed();
+        descr += " L" + readKernelAttributeFile(cacheDirPath + entry + "/level").trimmed();
+        QString type = readKernelAttributeFile(cacheDirPath + entry + "/type").trimmed();
         if (type == "Data")
             descr += "d";
         else if (type == "Instruction")
@@ -110,15 +110,15 @@ void CPUTab::readStaticInfo()
     ui->caches->setText(cachesLevels.join(" / "));
 
     int rows = 1;
-    for (int i=sqrt(threads); i; --i) {
-        if (threads%i == 0) {
+    for (int i = sqrt(threads); i; --i) {
+        if (threads % i == 0) {
             rows = i;
             break;
         }
     }
     int cols = threads / rows;
-    for (int i=0; i<rows; ++i) {
-        for (int j=0; j<cols; ++j) {
+    for (int i = 0; i < rows; ++i) {
+        for (int j = 0; j < cols; ++j) {
             QChart* chart = new QChart();
             QValueAxis* xAxis = new QValueAxis();
             xAxis->setRange(0, timeResolution);
@@ -188,33 +188,33 @@ void CPUTab::updateUsageStats()
     }
 
     QVector<float> usages;
-    for (int i = 0; i<stats.size(); ++i) {
+    for (int i = 0; i < stats.size(); ++i) {
         auto user = stats[i].user - lastStats[i].user;
         auto system = stats[i].system - lastStats[i].system;
         auto idle = stats[i].idle - lastStats[i].idle;
-        usages += 100. * (user+system) / (user+system+idle);
+        usages += 100. * (user + system) / (user + system + idle);
     }
 
     ui->cpuPercents->setText(QString("%1 %").arg(usages[0], 0, 'f', 1));
     lastStats = stats;
 
     if (usages.size() - 1 != chartSeries.size()) {
-        qCritical() << "We have"<<chartSeries.size()<<"CPU thread charts, but found"<<usages.size()-1<<"threads in the stats!";
+        qCritical() << "We have" << chartSeries.size() << "CPU thread charts, but found" << usages.size() - 1 << "threads in the stats!";
         return;
     }
-    for (int i=0; i<usages.size()-1; ++i) {
+    for (int i = 0; i < usages.size() - 1; ++i) {
         QXYSeries* series = chartSeries[i];
         QVector<QPointF> points = series->pointsVector();
 
         double nextX = qMax(points.size(), timeResolution);
-        double nextY = usages[i+1];
+        double nextY = usages[i + 1];
 
         if (points.size() >= timeResolution)
             points.removeFirst();
         for (QPointF& point : points)
             point.rx() -= 1;
 
-        points.push_back({nextX, nextY});
+        points.push_back({ nextX, nextY });
         series->replace(points);
     }
 }
@@ -232,7 +232,7 @@ void CPUTab::updateSensors()
     if (voltageStr.isNull()) {
         ui->voltage->setText("Unknown");
     } else {
-        float voltage = voltageStr.toUInt()/1000.;
+        float voltage = voltageStr.toUInt() / 1000.;
         ui->voltage->setText(QString("%1 V").arg(voltage, 0, 'f', 2));
     }
 }
